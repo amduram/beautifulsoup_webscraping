@@ -4,14 +4,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import sqlite3
-
-url = 'https://en.wikipedia.org/wiki/List_of_largest_banks'
-table_attributes = ['Name', 'MC_USD_Billion']
-csv_path = 'https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMSkillsNetwork-PY0221EN-Coursera/labs/v2/exchange_rate.csv'
-output_path = './Largest_banks_data.csv'
-db_name = 'Banks.db'
-table_name = 'Largest_banks'
-
+import json
 
 def log_progress(message: str) -> str:
     """
@@ -171,35 +164,46 @@ def run_query(query_statement: str, sql_connection: sqlite3.connect) -> None:
     query_output = pd.read_sql(query_statement, sql_connection)
     print(query_output)
 
+if __name__ == '__main__':
 
-log_progress('Preliminaries complete. Initiating ETL process')
+    with open('env_variables.json','r') as file:
+        data = json.load(file)
 
-df = extract(url, table_attributes)
-print(df)
+    url = data['url']
+    table_attributes = data['table_attributes']
+    csv_path = data['csv_path']
+    output_path = data['output_path']
+    db_name = data['db_name']
+    table_name = data['table_name']
 
-log_progress('Data extraction complete. Initiating Transformation process')
+    log_progress('Preliminaries complete. Initiating ETL process')
 
-df = transform(df, csv_path)
-print(df)
+    df = extract(url, table_attributes)
+    print(df)
 
-log_progress('Data transformation complete. Initiating loading process')
+    log_progress('Data extraction complete. Initiating Transformation process')
 
-load_to_csv(df, output_path)
+    df = transform(df, csv_path)
+    print(df)
 
-log_progress('Data saved to CSV file')
+    log_progress('Data transformation complete. Initiating loading process')
 
-sql_connection = sqlite3.connect(db_name)
+    load_to_csv(df, output_path)
 
-log_progress('SQL Connection initiated.')
+    log_progress('Data saved to CSV file')
 
-load_to_db(df, sql_connection, table_name)
+    sql_connection = sqlite3.connect(db_name)
 
-log_progress('Data loaded to Database as table. Running the query')
+    log_progress('SQL Connection initiated.')
 
-query_statement = f"SELECT AVG(MC_GBP_Billion) FROM Largest_banks"
+    load_to_db(df, sql_connection, table_name)
 
-run_query(query_statement, sql_connection)
+    log_progress('Data loaded to Database as table. Running the query')
 
-log_progress('Process Complete.')
+    query_statement = f"SELECT AVG(MC_GBP_Billion) FROM Largest_banks"
 
-sql_connection.close()
+    run_query(query_statement, sql_connection)
+
+    log_progress('Process Complete.')
+
+    sql_connection.close()
