@@ -1,0 +1,9 @@
+*.db
+
+*.csv
+
+code_log.txt
+
+__pycache__/
+
+*.pyc
